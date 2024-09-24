@@ -21,6 +21,8 @@ let registerLocalStorage = getRegisterLocalStorage();
 const dialogData = document.getElementById("dialog-data");
 const dialogHora = document.getElementById("dialog-hora");
 
+const divAlertaRegistroPonto = document.getElementById("alerta-registro-ponto");
+
 
 diaSemana.textContent = getWeekDay();
 diaMesAno.textContent = getCurrentDate();
@@ -36,30 +38,66 @@ function getCurrentPosition() {
 }
 
 
+const typeRegister = document.getElementById("tipos-ponto");
+
 const btnDialogBaterPonto = document.getElementById("btn-dialog-bater-ponto");
 btnDialogBaterPonto.addEventListener("click", () => {
 
-    let typeRegister = document.getElementById("tipos-ponto").value;
+    let lastTypeRegister = localStorage.getItem("lastTypeRegister");
+
+    // TO-DO:
+    // Pq o select não está com a option correspondente?
+    if(lastTypeRegister == "entrada") {
+        console.log("lastTypeRegister é entrada");
+        typeRegister.value = "intervalo";
+    }
+    if(lastTypeRegister == "intervalo") {
+        typeRegister.value = "volta-intervalo";
+    }
+    if(lastTypeRegister == "volta-intervalo") {
+        typeRegister.value = "saida";
+    }
+    if(lastTypeRegister == "saida") {
+        typeRegister.value = "entrada"
+    }
 
     let ponto = {
         "data": getCurrentDate(),
         "hora": getCurrentHour(),
         "localizacao": getCurrentPosition(),
         "id": 1,
-        "tipo": typeRegister
+        "tipo": typeRegister.value
     }
 
     console.log(ponto);
 
     saveRegisterLocalStorage(ponto);
 
-    localStorage.setItem("lastTypeRegister", typeRegister);
+    localStorage.setItem("lastTypeRegister", typeRegister.value);
+    localStorage.setItem("lastDateRegister", ponto.data);
+    localStorage.setItem("lastTimeRegister", ponto.hora);
 
     dialogPonto.close();
 
     // TO-DO:
-    // Fechar o dialog ao bater ponto e apresentar, de alguma forma
-    // uma confirmação (ou não) para o usuário
+    // CRIAR UM ALERTA NO TOPO DA PÁGINA PRINCIPAL PARA CONFIRMAR O REGISTRO DE PONTO
+    // DEVE FICAR ABERTO POR 3 SEGUNDOS E DEVE TER UM EFEITO DE TRANSIÇÃO
+    // DEVE PODER SER FECHADO PELO USUÁRIO QUE NÃO QUISER AGUARDAR 3s
+    // DEVE MOSTRAR UMA MENSAGEM DE SUCESSO AO REGISTRAR O PONTO
+    // CASO OCORRA ALGUM ERRO, MOSTRAR NO ALERTA 
+    // AS CORES DEVEM SER DIFERENTES EM CASO DE SUCESSO/ERRO/ALERTA
+
+    divAlertaRegistroPonto.classList.remove("hidden");
+    divAlertaRegistroPonto.classList.add("show");
+    
+    // TO-DO:
+    // fazer um efeito de transição para o alerta
+
+    setTimeout(() => {
+        divAlertaRegistroPonto.classList.remove("show");
+        divAlertaRegistroPonto.classList.add("hidden");
+    }, 5000);
+
 });
 
 
@@ -81,12 +119,20 @@ function getRegisterLocalStorage() {
 }
 
 
+// TO-DO:
+// alterar o nome da função
 function register() {
     // TO-DO:
     // Atualizar hora a cada segundo e data 00:00:00
     dialogData.textContent = "Data: " + getCurrentDate();
     dialogHora.textContent = "Hora: " + getCurrentHour();
+
+    let lastRegisterText = "Último registro: " + localStorage.getItem("lastDateRegister") + " - " + localStorage.getItem("lastTimeRegister") + " | " + localStorage.getItem("lastTypeRegister")
+    document.getElementById("dialog-last-register").textContent = lastRegisterText;
+
     dialogPonto.showModal();
+
+    console.log(localStorage.getItem("lastTypeRegister"));
 }
 
 function getWeekDay() {
