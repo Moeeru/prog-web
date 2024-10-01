@@ -2,22 +2,8 @@
 // Organizar código-fonte,
 //Funções
 function getCurrentDate() {
-    // TO-DO:
-    // Alterar a solução para considerar padStart ou slice
-    // Considerar formatos diferentes da data, conforme localização
-    // do usuário dd/mm/aaaa, mm/dd/aaaa, aaaa/mm/dd, aaaa.mm.dd
-    // Verificar se no Date() há algum método que possa auxiliar
-    // locale
     const date = new Date();
-    let month = date.getMonth();
-    let day = date.getDate();
-    if (day < 10) {
-        day = "0" + day
-    }
-    if (month < 10) {
-        month = "0" + (month + 1)
-    }
-    return day + "/" + month + "/" + date.getFullYear();
+    return String(date.getDate()).padStart(2, '0') + "/" + String((date.getMonth() + 1)).padStart(2, '0') + "/" + String(date.getFullYear()).padStart(2, '0');
 }
 
 function getWeekDay() {
@@ -46,6 +32,12 @@ function register() {
     let lastRegisterText = "Último registro: " + localStorage.getItem("lastDateRegister") + " - " + localStorage.getItem("lastTimeRegister") + " | " + localStorage.getItem("lastTypeRegister")
     document.getElementById("dialog-last-register").textContent = lastRegisterText;
     
+    // TO-DO
+    // Como "matar" o intervalo a cada vez que o dialog é fechado?
+    setInterval(() => {
+        dialogHora.textContent = "Hora: " + getCurrentHour();
+    }, 1000);
+
     dialogPonto.showModal();
     
     console.log(localStorage.getItem("lastTypeRegister"));
@@ -72,8 +64,10 @@ function getCurrentPosition() {
 }
 
 function saveRegisterLocalStorage(register) {
+    const typeRegister = document.getElementById("tipos-ponto");
     registerLocalStorage.push(register); // Array
     localStorage.setItem("register", JSON.stringify(registerLocalStorage));
+    localStorage.setItem("lastTypeRegister", typeRegister.value);
 } 
 
 //Fim funções
@@ -89,31 +83,28 @@ const horaMinSeg = document.getElementById("hora-min-seg");
         //Atualiza a hora de 1 em 1 segundo (1000 ticks == 1 segundo)
         setInterval(printCurrentHour, 1000);
     //Fim atualizações
+const nextRegister = {
+    "entrada": "intervalo",
+    "intervalo": "volta-intervalo", 
+    "volta-intervalo": "saida", 
+    "saida": "entrada"
+}
+let lastTypeRegister = localStorage.getItem("lastTypeRegister");
+    if(lastTypeRegister) {
+        const typeRegister   = document.getElementById("tipos-ponto");
+        typeRegister.value   = nextRegister[lastTypeRegister];
+        let lastRegisterText = "Último registro: " + localStorage.getItem("lastDateRegister") + " - " + localStorage.getItem("lastTimeRegister") + " | " + localStorage.getItem("lastTypeRegister")
+        document.getElementById("dialog-last-register").textContent = lastRegisterText;
+    }
 //Fim dados padrões
 
 //Regsitro e save do ponto
 const btnDialogBaterPonto = document.getElementById("btn-dialog-bater-ponto");
-const typeRegister = document.getElementById("tipos-ponto");
 const divAlertaRegistroPonto = document.getElementById("alerta-registro-ponto");
 btnDialogBaterPonto.addEventListener("click", () => {
-    
+    const typeRegister = document.getElementById("tipos-ponto");
     let lastTypeRegister = localStorage.getItem("lastTypeRegister");
-    
-    // TO-DO:
-    // Pq o select não está com a option correspondente?
-    if(lastTypeRegister == "entrada") {
-        console.log("lastTypeRegister é entrada");
-        typeRegister.value = "intervalo";
-    }
-    if(lastTypeRegister == "intervalo") {
-        typeRegister.value = "volta-intervalo";
-    }
-    if(lastTypeRegister == "volta-intervalo") {
-        typeRegister.value = "saida";
-    }
-    if(lastTypeRegister == "saida") {
-        typeRegister.value = "entrada"
-    }
+    console.log(lastTypeRegister);
     
     let ponto = {
         "data": getCurrentDate(),
@@ -127,7 +118,6 @@ btnDialogBaterPonto.addEventListener("click", () => {
     
     saveRegisterLocalStorage(ponto);
     
-    localStorage.setItem("lastTypeRegister", typeRegister.value);
     localStorage.setItem("lastDateRegister", ponto.data);
     localStorage.setItem("lastTimeRegister", ponto.hora);
     
@@ -154,6 +144,16 @@ btnDialogBaterPonto.addEventListener("click", () => {
     
 });
 //Fim resgistro save
+
+//Alerta registro
+// TO-DO:
+// Problema: os 5 segundos continuam contando
+const btnCloseAlertRegister = document.getElementById("alerta-registro-ponto-fechar");
+btnCloseAlertRegister.addEventListener("click", () => {
+    divAlertaRegistroPonto.classList.remove("show");
+    divAlertaRegistroPonto.classList.add("hidden");
+});
+//Fim alerta registro
 
 //Formulario de registro de ponto
 const btnBaterPonto = document.getElementById("btn-bater-ponto");
