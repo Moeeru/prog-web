@@ -24,14 +24,17 @@ function printCurrentHour() {
 // TO-DO:
 // alterar o nome da função
 function register() {
-    // TO-DO:
-    // Atualizar hora a cada segundo e data 00:00:00
     dialogData.textContent = "Data: " + getCurrentDate();
     dialogHora.textContent = "Hora: " + getCurrentHour();
     
-    let lastRegisterText = "Último registro: " + localStorage.getItem("lastDateRegister") + " - " + localStorage.getItem("lastTimeRegister") + " | " + localStorage.getItem("lastTypeRegister")
-    document.getElementById("dialog-last-register").textContent = lastRegisterText;
-    
+    let lastTypeRegister = localStorage.getItem("lastTypeRegister");
+    if(lastTypeRegister) {
+        const typeRegister   = document.getElementById("tipos-ponto");
+        typeRegister.value   = nextRegister[lastTypeRegister];
+        let lastRegisterText = "Último registro: " + localStorage.getItem("lastDateRegister") + " - " + localStorage.getItem("lastTimeRegister") + " | " + localStorage.getItem("lastTypeRegister")
+        document.getElementById("dialog-last-register").textContent = lastRegisterText;
+    }
+
     // TO-DO
     // Como "matar" o intervalo a cada vez que o dialog é fechado?
     setInterval(() => {
@@ -39,8 +42,6 @@ function register() {
     }, 1000);
 
     dialogPonto.showModal();
-    
-    console.log(localStorage.getItem("lastTypeRegister"));
 }
 
 // Esta função deve retornar sempre um ARRAY, mesmo que seja vazio
@@ -54,15 +55,20 @@ function getRegisterLocalStorage() {
     return JSON.parse(registers); // converte de JSON para Array
 }
 
-// TO-DO:
-// Por que esta função não retorna a localização?
-// [doc]
-function getCurrentPosition() {
-    navigator.geolocation.getCurrentPosition((position) => {
-        return position;
+async function getCurrentPosition() {
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition((position) => {
+            let userLocation = {
+                "latitude": position.coords.latitude,
+                "longitude": position.coords.longitude
+            }
+            resolve(userLocation);
+        },
+        (error) => {
+            reject("Erro ao recuperar a localização " + error);
+        });
     });
 }
-
 function saveRegisterLocalStorage(register) {
     const typeRegister = document.getElementById("tipos-ponto");
     registerLocalStorage.push(register); // Array
@@ -101,47 +107,39 @@ let lastTypeRegister = localStorage.getItem("lastTypeRegister");
 //Regsitro e save do ponto
 const btnDialogBaterPonto = document.getElementById("btn-dialog-bater-ponto");
 const divAlertaRegistroPonto = document.getElementById("alerta-registro-ponto");
-btnDialogBaterPonto.addEventListener("click", () => {
+btnDialogBaterPonto.addEventListener("click", async () => {
     const typeRegister = document.getElementById("tipos-ponto");
     let lastTypeRegister = localStorage.getItem("lastTypeRegister");
+
     console.log(lastTypeRegister);
-    
+
+    let userCurrentPosition = await getCurrentPosition();
+
     let ponto = {
         "data": getCurrentDate(),
         "hora": getCurrentHour(),
-        "localizacao": getCurrentPosition(),
+        "localizacao": userCurrentPosition,
         "id": 1,
         "tipo": typeRegister.value
     }
-    
+
     console.log(ponto);
-    
+
     saveRegisterLocalStorage(ponto);
-    
+
     localStorage.setItem("lastDateRegister", ponto.data);
     localStorage.setItem("lastTimeRegister", ponto.hora);
-    
+
     dialogPonto.close();
-    
-    // TO-DO:
-    // CRIAR UM ALERTA NO TOPO DA PÁGINA PRINCIPAL PARA CONFIRMAR O REGISTRO DE PONTO
-    // DEVE FICAR ABERTO POR 3 SEGUNDOS E DEVE TER UM EFEITO DE TRANSIÇÃO
-    // DEVE PODER SER FECHADO PELO USUÁRIO QUE NÃO QUISER AGUARDAR 3s
-    // DEVE MOSTRAR UMA MENSAGEM DE SUCESSO AO REGISTRAR O PONTO
-    // CASO OCORRA ALGUM ERRO, MOSTRAR NO ALERTA 
-    // AS CORES DEVEM SER DIFERENTES EM CASO DE SUCESSO/ERRO/ALERTA
-    
+
     divAlertaRegistroPonto.classList.remove("hidden");
     divAlertaRegistroPonto.classList.add("show");
-    
-    // TO-DO:
-    // fazer um efeito de transição para o alerta
-    
+
     setTimeout(() => {
         divAlertaRegistroPonto.classList.remove("show");
         divAlertaRegistroPonto.classList.add("hidden");
     }, 5000);
-    
+
 });
 //Fim resgistro save
 
